@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿using System;
 using System.Collections.Generic;
 
 
@@ -21,29 +21,33 @@ namespace codeImage
         private static List<Rectangle> textArea;
         public String archivo = "";
         public String ruta = "";
-        public String unidad = "E";
+        public String layout = "";
+        public string campos = "";
+        public String unidad = "";
         System.Threading.Semaphore S = new System.Threading.Semaphore(3, 3);
         public ArrayList arrText = new ArrayList();
-       private static int dim = 0;
-        private static  int umbral = 0;
+        private static int dim = 0;
+        private static int umbral = 0;
         private static List<Emgu.CV.Image<Emgu.CV.Structure.Bgr, Byte>> imageparts;
 
         private int procesado = 0;
         private static List<palabra> palabrasProc = new List<palabra>();
         private static int contador;
 
-        class palabra { 
+        class palabra
+        {
             public int orden;
             public String texto;
             public String nombre;
         }
 
-        public void cargarCampos() {
-            StreamReader objReader = new StreamReader(ruta+"campos.txt");
+        public void cargarCampos()
+        {
+            StreamReader objReader = new StreamReader(ruta + campos + ".txt");
             string sLine = "";
-            
-          
-          
+
+
+
             while (sLine != null)
             {
                 sLine = objReader.ReadLine();
@@ -60,9 +64,9 @@ namespace codeImage
             archivo));
             Emgu.CV.Image<Emgu.CV.Structure.Gray, Byte> img = new Emgu.CV.Image<Emgu.CV.Structure.Gray, Byte>(memoryImageT);
 
-            string layout = ruta + "files/layout.bmp";
+            string layoutr = ruta + "files/" + layout + ".bmp";
             System.Drawing.Bitmap imglayout =
-         new System.Drawing.Bitmap(System.Drawing.Image.FromFile(layout));
+         new System.Drawing.Bitmap(System.Drawing.Image.FromFile(layoutr));
 
 
             // Emgu.CV.CvInvoke.Resize(img, img, new Size(imglayout.Width, imglayout.Height));
@@ -76,14 +80,15 @@ namespace codeImage
 
         public Emgu.CV.Image<Emgu.CV.Structure.Bgr, Byte> eliminarlineasegmento(Emgu.CV.Image<Emgu.CV.Structure.Bgr, Byte> img, int num, int porcentajeR, int porcentajeC)
         {
-
+            if (porcentajeC < 65)
+                porcentajeC = 75;
             //era 230
             int acumula = 0;
             //vertical
             int[] valores = new int[img.Width];
             List<int> maximos = new List<int>();
             List<int> minimos = new List<int>();
-            
+
             int min = 2 * img.Height;
             int max = 0;
             for (int v = 0; v < img.Width; v++)
@@ -139,20 +144,20 @@ namespace codeImage
             for (int v = 0; v < img.Height; v++)
             {
                 acumula = 0;
-               
-                    for (int u = 4; u < img.Width - 4; u++)
-                    {
 
-                        byte a = img.Data[v, u, 0];
-                        byte b = img.Data[v, u + 2, 0];
-                        byte c = img.Data[v, u + 4, 0];
-                        byte d = img.Data[v, u - 2, 0];
-                        byte e = img.Data[v, u - 4, 0];
-                        if (a < umbral && b < umbral && c < umbral && d < umbral && e < umbral)
-                            acumula++;
+                for (int u = 4; u < img.Width - 4; u++)
+                {
+
+                    byte a = img.Data[v, u, 0];
+                    byte b = img.Data[v, u + 2, 0];
+                    byte c = img.Data[v, u + 4, 0];
+                    byte d = img.Data[v, u - 2, 0];
+                    byte e = img.Data[v, u - 4, 0];
+                    if (a < umbral && b < umbral && c < umbral && d < umbral && e < umbral)
+                        acumula++;
 
 
-                    
+
 
 
                 }
@@ -164,7 +169,7 @@ namespace codeImage
 
                 if (valores[i] * 100 / img.Width > porcentajeR)
                 {
-                  //  Console.WriteLine("Linea encontrada en imagen-" + num + " fila " + i);
+                    //  Console.WriteLine("Linea encontrada en imagen-" + num + " fila " + i);
                     for (int j = 0; j < img.Width; j++)
                     {
 
@@ -177,8 +182,8 @@ namespace codeImage
             }
 
 
-            
-            
+
+
 
             //delimitar region vertical
 
@@ -186,7 +191,7 @@ namespace codeImage
             {
 
                 min = 2 * img.Height;
-                max = 0;
+
                 for (int u = 0; u < img.Height; u++)
                 {
 
@@ -194,46 +199,56 @@ namespace codeImage
                     if (a < umbral)
                     {
 
-                        if (u > max && u > img.Height / 2)
-                            max = u;
+
                         if (u < min && u < img.Height / 2)
                             min = u;
 
 
                     }
 
-
-
-
                 }
+
 
                 if (min != img.Height * 2)
                     minimos.Add(min);
 
-                if (max != 0)
-                    maximos.Add(max);
+
 
 
             }
-            min = 0; max = 0;
+
             foreach (var n in minimos)
                 min = n + min;
 
             min = min / minimos.Count;
 
-            foreach (var n in maximos)
-                max = n + max;
 
-            max = max / maximos.Count;
+            //buscar delimitador maximo
+            for (int v = min + dim / 2; v < img.Height; v++)
+            {
 
-           // Console.WriteLine(num+ "minimo-" + min + " maximo- " + max);
+
+                max = 0;
+                for (int u = 0; u < img.Width; u++)
+                {
+                    byte a = img.Data[v, u, 0];
+                    if (a == 255)
+                        max++;
+                }
+                if (max >= img.Width * 0.95)
+                    maximos.Add(v);
+            }
+            maximos.Sort();
+            max = maximos[0] + dim / 10;
 
 
 
             for (int i = 0; i < img.Height; i++)
             {
 
-                if (i < min-dim/5 || i > min+dim*11/10)
+
+                if (i < min - dim / 5 || i > max)
+
                 {
 
                     for (int j = 0; j < img.Width; j++)
@@ -247,7 +262,7 @@ namespace codeImage
                 }
             }
 
-            
+
 
             Image<Bgr, Byte> img2 = new Image<Bgr, Byte>(img.Width, img.Height);
 
@@ -279,22 +294,22 @@ namespace codeImage
             int miny = 10000;
             int maxx = 0;
             int maxy = 0;
-           
+
             Emgu.CV.Image<Emgu.CV.Structure.Gray, Byte> img = new Emgu.CV.Image<Emgu.CV.Structure.Gray, Byte>(memoryImageT);
 
-           umbral = valorUmbral(img); 
-            
+            umbral = valorUmbral(img);
 
-            for (int v = 4; v < img.Height-4; v++)
+
+            for (int v = 4; v < img.Height - 4; v++)
             {
-                for (int u = 4; u < img.Width-4; u++)
+                for (int u = 4; u < img.Width - 4; u++)
                 {
                     byte a = img.Data[v, u, 0]; //Get Pixel Color | fast way
-                    if (a <= umbral*0.50 && (
-                        (img.Data[v - 4, u - 4, 0] <= umbral*0.50 && img.Data[v + 4, u + 4, 0] <= umbral*0.50 && img.Data[v - 2, u - 2, 0] <= umbral*0.50 && img.Data[v + 2, u + 2, 0] <= umbral*0.50) ||
-                        (img.Data[v + 4, u - 4, 0] <= umbral*0.50 && img.Data[v - 4, u + 4, 0] <= umbral*0.50 && img.Data[v + 2, u - 2, 0] <= umbral*0.50 && img.Data[v - 2, u + 2, 0] <= umbral*0.50) ||
-                        (img.Data[v, u - 4, 0] <= umbral*0.50 && img.Data[v, u + 2, 0] <= umbral*0.50 && img.Data[v, u - 2, 0] <= umbral*0.50 && img.Data[v, u + 2, 0] <= umbral*0.50) ||
-                        (img.Data[v + 4, u, 0] <= umbral*0.50 && img.Data[v - 2, u, 0] <= umbral*0.50 && img.Data[v + 2, u, 0] <= umbral*0.50 && img.Data[v - 2, u, 0] <= umbral*0.50)
+                    if (a <= umbral * 0.50 && (
+                        (img.Data[v - 4, u - 4, 0] <= umbral * 0.50 && img.Data[v + 4, u + 4, 0] <= umbral * 0.50 && img.Data[v - 2, u - 2, 0] <= umbral * 0.50 && img.Data[v + 2, u + 2, 0] <= umbral * 0.50) ||
+                        (img.Data[v + 4, u - 4, 0] <= umbral * 0.50 && img.Data[v - 4, u + 4, 0] <= umbral * 0.50 && img.Data[v + 2, u - 2, 0] <= umbral * 0.50 && img.Data[v - 2, u + 2, 0] <= umbral * 0.50) ||
+                        (img.Data[v, u - 4, 0] <= umbral * 0.50 && img.Data[v, u + 2, 0] <= umbral * 0.50 && img.Data[v, u - 2, 0] <= umbral * 0.50 && img.Data[v, u + 2, 0] <= umbral * 0.50) ||
+                        (img.Data[v + 4, u, 0] <= umbral * 0.50 && img.Data[v - 2, u, 0] <= umbral * 0.50 && img.Data[v + 2, u, 0] <= umbral * 0.50 && img.Data[v - 2, u, 0] <= umbral * 0.50)
                         ))
                     {
 
@@ -355,7 +370,7 @@ namespace codeImage
             double angle = skewChecker.GetSkewAngle(unmanagedImage);
             // create rotation filter
             archivo = ruta + "files/imagen.bmp"; ;
-            if (angle > 0)
+            if (angle != 0)
             {
                 RotateBilinear rotationFilter = new RotateBilinear(-angle);
                 rotationFilter.FillColor = Color.White;
@@ -396,7 +411,7 @@ namespace codeImage
 
 
 
-            double cannyThresholdLinking = umbral-60;
+            double cannyThresholdLinking = umbral - 60;
             Emgu.CV.Mat cannyEdges = new Emgu.CV.Mat();
             Emgu.CV.CvInvoke.Canny(uimage, cannyEdges, cannyThreshold, cannyThresholdLinking);
 
@@ -407,7 +422,7 @@ namespace codeImage
                cannyEdges,
                1, //Distance resolution in pixel-related units 1
                Math.PI / 180.0, //Angle resolution measured in radians.
-              255-umbral, //threshold
+              255 - umbral, //threshold
                30, //min Line width 10
                5); //gap between lines 1
 
@@ -417,10 +432,10 @@ namespace codeImage
             foreach (Emgu.CV.Structure.LineSegment2D line in lines)
             {
 
-               
 
-                    lineImage.Draw(line, new Gray(255), 2);
-                
+
+                lineImage.Draw(line, new Gray(255), 2);
+
 
             }
 
@@ -452,25 +467,25 @@ namespace codeImage
         }
 
         public int encontrarDimensionLetra()
-        { 
-            int tamano=0;
-             System.Drawing.Bitmap bmp =
-         new System.Drawing.Bitmap(System.Drawing.Image.FromFile(ruta + "files/6imagenthresherode.bmp"));
+        {
+            int tamano = 0;
+            System.Drawing.Bitmap bmp =
+        new System.Drawing.Bitmap(System.Drawing.Image.FromFile(ruta + "files/6imagenthresherode.bmp"));
             Emgu.CV.Image<Emgu.CV.Structure.Gray, Byte> imgt = new Emgu.CV.Image<Emgu.CV.Structure.Gray, Byte>(bmp);
-      
+
             Emgu.CV.Structure.MCvScalar sc = new Emgu.CV.Structure.MCvScalar();
-           Size s = new Size(imgt.Width/10, 1);
-          
+            Size s = new Size(imgt.Width / 10, 1);
+
             Point p = new Point(-1, -1);
             Mat element = Emgu.CV.CvInvoke.GetStructuringElement(Emgu.CV.CvEnum.ElementShape.Rectangle, s, p);
-           
+
 
             Emgu.CV.CvInvoke.MorphologyEx(imgt, imgt, Emgu.CV.CvEnum.MorphOp.Close, element, new Point(-1, -1), 1, Emgu.CV.CvEnum.BorderType.Constant, sc);
             guardarArchivo(imgt.Mat, "imagenCerrada");
             List<int> valores = new List<int>();
-            
 
-            
+
+
             Emgu.CV.Util.VectorOfVectorOfPoint contours = new Emgu.CV.Util.VectorOfVectorOfPoint();
 
             Emgu.CV.Mat hier = new Emgu.CV.Mat();
@@ -485,41 +500,43 @@ namespace codeImage
                     Emgu.CV.CvInvoke.ApproxPolyDP((contours[i]), contours_poly[i], 3, true);
 
                     Rectangle appRect = Emgu.CV.CvInvoke.BoundingRectangle(contours_poly[i]);                //get the bounding rect
-                   if(appRect.Height>2)
-                       valores.Add(appRect.Height);
+                    if (appRect.Height > 2)
+                        valores.Add(appRect.Height);
 
                 }
             }
             valores.Sort();
             if (valores.Count % 2 == 0)
             {
-                tamano = (valores[Convert.ToInt32(Math.Floor(valores.Count * 0.50))] + valores[Convert.ToInt32(Math.Floor(valores.Count * 0.50))+1] )/ 2;
+                tamano = (valores[Convert.ToInt32(Math.Floor(valores.Count * 0.50))] + valores[Convert.ToInt32(Math.Floor(valores.Count * 0.50)) + 1]) / 2;
 
             }
-            else {
+            else
+            {
                 tamano = valores[Convert.ToInt32(Math.Round(valores.Count * 0.50))];
             }
 
-           
-            
-            
-          return tamano;
-        
+
+
+
+            return tamano;
+
         }
-        public int valorUmbral(Emgu.CV.Image<Emgu.CV.Structure.Gray, Byte> imgt) {
-            int umbral = 0, acumula = 0, con = 0 ;
+        public int valorUmbral(Emgu.CV.Image<Emgu.CV.Structure.Gray, Byte> imgt)
+        {
+            int umbral = 0, acumula = 0, con = 0;
             for (int v = 0; v < imgt.Width; v++)
             {
-               
+
                 for (int u = 0; u < imgt.Height; u++)
                 {
 
                     byte a = imgt.Data[u, v, 0];
-                   
-                        acumula = a + acumula;
-                        con++;
-                    
-                  
+
+                    acumula = a + acumula;
+                    con++;
+
+
                 }
             }
             umbral = acumula / con;
@@ -536,41 +553,43 @@ namespace codeImage
             Emgu.CV.Mat mascara = new Emgu.CV.Mat();
             Emgu.CV.Structure.MCvScalar sc = new Emgu.CV.Structure.MCvScalar();
             Mat img = imgOrig.Mat;
-            string layout = ruta + "files/layout.bmp";
+            string layoutr = ruta + "files/" + layout + ".bmp";
             System.Drawing.Bitmap bmplayout =
-         new System.Drawing.Bitmap(System.Drawing.Image.FromFile(layout));
+         new System.Drawing.Bitmap(System.Drawing.Image.FromFile(layoutr));
             Emgu.CV.Image<Emgu.CV.Structure.Gray, Byte> imageLayout = new Emgu.CV.Image<Emgu.CV.Structure.Gray, Byte>(bmplayout);
 
 
 
             guardarArchivo(img, "1ImageWork");
             Emgu.CV.CvInvoke.CvtColor(img, img_gray, Emgu.CV.CvEnum.ColorConversion.Bgr2Gray);
+            Emgu.CV.CvInvoke.Threshold(img_gray, img_threshold, umbral, 255, Emgu.CV.CvEnum.ThresholdType.Otsu);
 
-            Emgu.CV.CvInvoke.BitwiseNot(img_gray, img_gray);
+            Emgu.CV.CvInvoke.BitwiseNot(img_threshold, img_threshold);
 
-          
-          
 
-            Emgu.CV.CvInvoke.BitwiseAnd(img_gray, imageLayout, img_gray);
 
-          
+            Emgu.CV.CvInvoke.BitwiseAnd(img_threshold, imageLayout, img_threshold);
+
+
+
+            guardarArchivo(img_threshold, "2threshImage");
 
 
             Emgu.CV.Mat verticalStructure = Emgu.CV.CvInvoke.GetStructuringElement(Emgu.CV.CvEnum.ElementShape.Rectangle, new Size(2, 1), new Point(-1, -1));
 
-            Emgu.CV.CvInvoke.Threshold(img_gray, img_threshold, 0, 255, Emgu.CV.CvEnum.ThresholdType.Otsu);
+
             Emgu.CV.CvInvoke.BitwiseNot(img_threshold, img_threshold);
-            guardarArchivo(img_threshold, "2threshImage");
 
 
-           
+
+
 
             img_threshold = detectarLineas(img_threshold);
             Emgu.CV.CvInvoke.BitwiseNot(img_threshold, img_threshold);
 
             Emgu.CV.CvInvoke.Erode(img_threshold, img_threshold, verticalStructure, new Point(-1, -1), 1, Emgu.CV.CvEnum.BorderType.Default, new Emgu.CV.Structure.MCvScalar());
             guardarArchivo(img_threshold, "6imagenthresherode");
-            dim=  encontrarDimensionLetra();
+            dim = encontrarDimensionLetra();
 
             verticalStructure = Emgu.CV.CvInvoke.GetStructuringElement(Emgu.CV.CvEnum.ElementShape.Rectangle, new Size(2, 2), new Point(-1, -1));
 
@@ -578,7 +597,7 @@ namespace codeImage
             guardarArchivo(img_threshold, "7imagenthreshdilate");
 
             //proporcion de letra 3/4 de altura cerradura aplicada entre 3 letras tomando en cuenta espacios
-            Size s = new Size(Convert.ToInt32(Math.Round(dim*0.75*3)), 2);//modificado 40-3
+            Size s = new Size(Convert.ToInt32(Math.Round(dim * 0.75 * 3)), 2);//modificado 40-3
             Point p = new Point(-1, -1);
             element = Emgu.CV.CvInvoke.GetStructuringElement(Emgu.CV.CvEnum.ElementShape.Rectangle, s, p);
             guardarArchivo(element, "kernel");
@@ -604,33 +623,30 @@ namespace codeImage
 
             for (int i = 0; i < contours.Size; i++)
             {
-                if (contours[i].Size > 100)//80
+
                 {
                     Emgu.CV.CvInvoke.ApproxPolyDP((contours[i]), contours_poly[i], 3, true);
 
                     Rectangle appRect = Emgu.CV.CvInvoke.BoundingRectangle(contours_poly[i]);                //get the bounding rect
 
 
-                    if (appRect.Height > dim/2)
+                    if (appRect.Height > dim / 2)
                     {
-                        if ((appRect.Width / appRect.Height >= 2))
-                        {
 
 
 
-                            appRect.Height = appRect.Height + dim/2;
-                            appRect.Width = appRect.Width + dim*3/4;
-                            appRect.Y = appRect.Y - dim/4;
-                            appRect.X = appRect.X - dim*3/4;
 
-                            boundRect.Add(appRect);
-                        }
+                        appRect.Height = appRect.Height + dim / 2;
+                        appRect.Width = appRect.Width + dim * 3 / 4;
+                        appRect.Y = appRect.Y - dim / 4;
+                        appRect.X = appRect.X - dim * 3 / 4;
 
+                        boundRect.Add(appRect);
                     }
 
                 }
             }
-         
+
 
             return boundRect;
         }
@@ -646,7 +662,7 @@ namespace codeImage
 
             Emgu.CV.Image<Emgu.CV.Structure.Bgr, Byte> imgOrig = new Emgu.CV.Image<Emgu.CV.Structure.Bgr, Byte>(memoryImageT);
 
-          
+
 
 
 
@@ -697,23 +713,60 @@ namespace codeImage
 
 
                 //mejoro calidad de texto en cada segmento
-                Emgu.CV.CvInvoke.CvtColor(imagen, imagen, Emgu.CV.CvEnum.ColorConversion.Bgr2Gray);
 
-                guardarArchivo(imagen.Mat, "z-imgtexto-" + k.ToString() + "-antes");
-              
-                Mat imagenMat = eliminarlineasegmento(imagen, k,40, dim*130 /imagen.Height).Mat;
+                Emgu.CV.Image<Emgu.CV.Structure.Bgr, Byte> mt = new Emgu.CV.Image<Emgu.CV.Structure.Bgr, Byte>(imagen.Mat.Bitmap);
 
-                Emgu.CV.CvInvoke.CvtColor(imagenMat, imagenMat, Emgu.CV.CvEnum.ColorConversion.Bgr2Gray);
+                Emgu.CV.CvInvoke.CvtColor(imagen, mt, Emgu.CV.CvEnum.ColorConversion.Bgr2Gray);
+                guardarArchivo(mt.Mat, "z-imgtexto-" + k.ToString() + "-antes");
+                int umbralsegmento = valorUmbral(mt.Mat.ToImage<Emgu.CV.Structure.Gray, Byte>());
+
+                if (umbralsegmento < 200)
+                    Emgu.CV.CvInvoke.Threshold(mt, mt, umbral, 255, Emgu.CV.CvEnum.ThresholdType.Otsu);
+
+
+
+
+
+                Mat imagenMat = new Mat();
+
+
+                if (Convert.ToDouble(imagen.Height) / dim <= 1.5)
+                {
+                    imagenMat = eliminarlineasegmento(mt.Mat.ToImage<Emgu.CV.Structure.Bgr, Byte>(), k, 40, dim * 130 / imagen.Height).Mat;
+
+                }
+                if (Convert.ToDouble(imagen.Height) / dim > 1.5 && imagen.Height / dim <= 2.0)//2.5
+                {
+                    imagenMat = eliminarlineasegmento(mt.Mat.ToImage<Emgu.CV.Structure.Bgr, Byte>(), k, 40, dim * 120 / imagen.Height).Mat;
+
+                }
+                if (Convert.ToDouble(imagen.Height) / dim > 2.0)
+                {
+                    imagenMat = eliminarlineasegmento(mt.Mat.ToImage<Emgu.CV.Structure.Bgr, Byte>(), k, 40, dim * 110 / imagen.Height).Mat;
+                }
+
+
 
 
                 Emgu.CV.CvInvoke.BitwiseNot(imagenMat, imagenMat);
 
-                Emgu.CV.CvInvoke.Threshold(imagenMat, imagenMat, 0, 255,  Emgu.CV.CvEnum.ThresholdType.Otsu);
-                
-             
-           
-              
+                Mat verticalStructure = Emgu.CV.CvInvoke.GetStructuringElement(Emgu.CV.CvEnum.ElementShape.Rectangle, new Size(2, 1), new Point(-1, -1));
+
+                Emgu.CV.CvInvoke.Erode(imagenMat, imagenMat, verticalStructure, new Point(-1, -1), 1, Emgu.CV.CvEnum.BorderType.Default, new Emgu.CV.Structure.MCvScalar());
+
+
+                verticalStructure = Emgu.CV.CvInvoke.GetStructuringElement(Emgu.CV.CvEnum.ElementShape.Rectangle, new Size(2, 2), new Point(-1, -1));
+
+
+                Emgu.CV.CvInvoke.Dilate(imagenMat, imagenMat, verticalStructure, new Point(-1, -1), 1, Emgu.CV.CvEnum.BorderType.Default, new Emgu.CV.Structure.MCvScalar());
+
+
+
                 Emgu.CV.CvInvoke.BitwiseNot(imagenMat, imagenMat);
+
+
+
+
                 guardarArchivo(imagenMat, "z-imgtexto-" + k.ToString());
                 k++;
             }
@@ -757,17 +810,19 @@ namespace codeImage
 
 
         }
-        public String coincidirCampo(int x,int y){
-           
-            String nombre = "";
-           
+        public String coincidirCampo(int x, int y)
+        {
 
-            foreach (String campo in arrText) {
-                if(Math.Abs(x-Convert.ToInt16(campo.Split(',')[1]))<dim*2 && Math.Abs(y-Convert.ToInt16(campo.Split(',')[2]))<dim/2)
-                    nombre=campo.Split(',')[0];
+            String nombre = "";
+
+
+            foreach (String campo in arrText)
+            {
+                if (Math.Abs(x - Convert.ToInt16(campo.Split(',')[1])) < dim * 2 && Math.Abs(y - Convert.ToInt16(campo.Split(',')[2])) < dim / 2)
+                    nombre = campo.Split(',')[0];
             }
             return nombre;
-    
+
         }
         public void ProcesarOCRHilos()
         {
@@ -799,22 +854,26 @@ namespace codeImage
 
                     try
                     {
-                        using (var engine = new TesseractEngine(unidad+@":\tessdata", "eng", EngineMode.Default))
+                        using (var engine = new TesseractEngine(unidad + @":\tessdata", "eng", EngineMode.Default))
                         {
-                            using (var page = engine.Process(img))
+                            using (var page = engine.Process(img, Tesseract.PageSegMode.SingleLine))
+
+
+
                             {
+
                                 int x = textArea[i].X;
                                 int y = textArea[i].Y;
-                                string field=coincidirCampo(x, y);
+                                string field = coincidirCampo(x, y);
 
-                             
 
-                               
+
+
                                 campo = page.GetText();
                                 palabra p = new palabra();
                                 p.nombre = field;
                                 p.orden = i;
-                                p.texto = campo.Replace('‘', '\0');
+                                p.texto = campo.Replace('‘', '\0').Replace("'", "\0");
                                 palabrasProc.Add(p);
                                 Console.WriteLine("exito hilo " + i.ToString());
                                 if (palabrasProc.Count == textArea.Count)
@@ -852,26 +911,26 @@ namespace codeImage
             {
 
                 //Pass the filepath and filename to the StreamWriter Constructor
-                StreamWriter sw = new StreamWriter(ruta+"output.txt");
+                StreamWriter sw = new StreamWriter(ruta + "output.txt");
 
                 //Write a line of text
-                
 
-              
 
-           
-            if (palabrasProc.Count == textArea.Count)
-            {
-                palabrasProc.Sort((p, q) => -1 * p.orden.CompareTo(q.orden));
-                foreach (palabra campo in palabrasProc)
+
+
+
+                if (palabrasProc.Count == textArea.Count)
                 {
-                   // Console.WriteLine(campo.nombre+": "+campo.texto + "\n\r");
-                    sw.WriteLine(campo.nombre + ":" + campo.texto.Replace('\n',' '));
-                }
+                    palabrasProc.Sort((p, q) => -1 * p.orden.CompareTo(q.orden));
+                    foreach (palabra campo in palabrasProc)
+                    {
+                        // Console.WriteLine(campo.nombre+": "+campo.texto + "\n\r");
+                        sw.WriteLine(campo.nombre + ":" + campo.texto.Replace('\n', ' '));
+                    }
 
-            }
-            //Close the file
-            sw.Close();
+                }
+                //Close the file
+                sw.Close();
 
             }
             catch (Exception e)
@@ -880,7 +939,7 @@ namespace codeImage
             }
             finally
             {
-              
+
             }
 
         }
