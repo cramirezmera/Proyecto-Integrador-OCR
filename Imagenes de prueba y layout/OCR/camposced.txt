@@ -1,0 +1,10 @@
+apellido,330,195
+nombre,330,225
+provincia,330,285
+ciudad,330,315
+parroquia,330,345
+fechanac,580,380
+nacionalidad,500,415
+genero,390,455
+estado,475,485
+numerocedula,685,105

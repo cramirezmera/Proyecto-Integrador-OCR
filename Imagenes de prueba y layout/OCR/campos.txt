@@ -1,0 +1,14 @@
+code,10,5
+shipperName,10,80
+shiperCode,10,110
+shiperAddress,10,140
+consigneeName,10,280
+consigneeRuc,10,310
+consigneeAdress,10,340
+airportDep,10,680
+currency,710,750
+airportDest,10,815
+numberP,145,1040
+detailP,1020,1050
+total,390,1960
+date,575,1990
