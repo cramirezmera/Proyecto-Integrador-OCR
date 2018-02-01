@@ -239,6 +239,7 @@ namespace codeImage
                     maximos.Add(v);
             }
             maximos.Sort();
+            if(maximos.Count!=0)
             max = maximos[0] + dim / 10;
 
 
@@ -369,7 +370,8 @@ namespace codeImage
             DocumentSkewChecker skewChecker = new DocumentSkewChecker();
             double angle = skewChecker.GetSkewAngle(unmanagedImage);
             // create rotation filter
-            archivo = ruta + "files/imagen.bmp"; ;
+            archivo = ruta + "files/imagen.bmp";
+            Console.WriteLine("El angulo de inclinacion del documento es "+angle.ToString());
             if (angle != 0)
             {
                 RotateBilinear rotationFilter = new RotateBilinear(-angle);
@@ -746,7 +748,7 @@ namespace codeImage
                 }
 
 
-
+                /*
 
                 Emgu.CV.CvInvoke.BitwiseNot(imagenMat, imagenMat);
 
@@ -764,7 +766,7 @@ namespace codeImage
 
                 Emgu.CV.CvInvoke.BitwiseNot(imagenMat, imagenMat);
 
-
+    */
 
 
                 guardarArchivo(imagenMat, "z-imgtexto-" + k.ToString());
@@ -875,7 +877,7 @@ namespace codeImage
                                 p.orden = i;
                                 p.texto = campo.Replace('‘', '\0').Replace("'", "\0");
                                 palabrasProc.Add(p);
-                                Console.WriteLine("exito hilo " + i.ToString());
+                               // Console.WriteLine("exito hilo " + i.ToString());
                                 if (palabrasProc.Count == textArea.Count)
                                     Console.WriteLine("Se obtuvo texto de los segmentos, presione una tecla para generar archivo.");
                             }
@@ -883,7 +885,7 @@ namespace codeImage
                     }
                     catch (Exception)
                     {
-                        Console.WriteLine("fallo hilo " + i.ToString());
+                      //  Console.WriteLine("fallo hilo " + i.ToString());
 
                     }
                 }

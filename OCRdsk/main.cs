@@ -15,20 +15,30 @@ namespace OCR
         static void Main(string[] args)
         {
             MethodsOCR grap = new MethodsOCR();
-            String unidad = "E";
-            String file = "imgIN";
-            String layout = "layout";
-            String campos = "campos";
+            String unidad = "B";
+            String file = "imgIN-15.png";
+            String layout = "layoutor";
+            String campos = "camposor";
             if (args.Length != 0)
-                unidad = args[0];
-            if (args.Length != 0)
-                file = args[1];
-            if (args.Length != 0)
+            {
+                unidad = args[0]; 
+            }
+            if (args.Length >1)
+            {
+                file = args[1]; 
+            }
+            if (args.Length >2)
+            {
                 layout = args[2];
-            if (args.Length != 0)
-                campos = args[3];
+            }
+            if (args.Length >3)
+            {
+                campos = args[3]; 
+            }
+          
 
-            grap.archivo = unidad + ":/OCR/" + file + ".png";
+
+            grap.archivo = unidad + ":/OCR/" + file ;
             grap.ruta = unidad + ":/OCR/";
             grap.layout = layout;
             grap.campos = campos;
